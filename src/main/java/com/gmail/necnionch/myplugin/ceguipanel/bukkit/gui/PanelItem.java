@@ -3,6 +3,7 @@ package com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.util.ComponentUtil;
 import com.google.common.collect.Lists;
 import net.md_5.bungee.api.chat.ComponentBuilder;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -85,6 +86,10 @@ public class PanelItem {
             item.setItemMeta(meta);
         }
         return new PanelItem(item);
+    }
+
+    public static PanelItem createBlankItem() {
+        return createItem(Material.BLACK_STAINED_GLASS_PANE, ChatColor.RESET.toString());
     }
 
     public static Builder create(Material material) {

@@ -1,4 +1,4 @@
-package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.action;
+package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition;
 
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.ItemConfig;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIIcon;
@@ -14,6 +14,7 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,11 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class ItemGiveAction implements ClickAction {
+public class ItemHasCondition implements Condition {
 
     private @Nullable ItemStack itemStack;
 
-    public ItemGiveAction(@Nullable ItemStack itemStack) {
+    public ItemHasCondition(@Nullable ItemStack itemStack) {
         this.itemStack = itemStack;
     }
 
@@ -39,12 +40,17 @@ public class ItemGiveAction implements ClickAction {
     }
 
     @Override
-    public boolean action(GUIPanel panel, Player player) {
-        if (itemStack != null && !itemStack.getType().isAir()) {
-            player.getInventory().addItem(itemStack.clone()).forEach((i, itemStack) ->
-            player.getWorld().dropItemNaturally(player.getLocation(), itemStack)
-            );
-            return true;
+    public boolean check(GUIPanel panel, Player player) {
+        if (itemStack == null)
+            return false;
+        int count = itemStack.getAmount();
+        PlayerInventory inv = player.getInventory();
+        for (ItemStack next : inv) {
+            if (itemStack.isSimilar(next)) {
+                count -= next.getAmount();
+                if (count <= 0)
+                    return true;
+            }
         }
         return false;
     }
@@ -54,13 +60,13 @@ public class ItemGiveAction implements ClickAction {
         if (itemStack == null)
             return null;
 
-        List<String> lore = Lists.newArrayList("アイテムを与える");
+        List<String> lore = Lists.newArrayList();
+        lore.add("アイテムの所持");
 
         String itemName = Optional.ofNullable(itemStack.getItemMeta())
                 .filter(ItemMeta::hasDisplayName)
                 .map(ItemMeta::getDisplayName)
                 .orElse(itemStack.getType().name());
-
         String countName = " [x" + itemStack.getAmount() + "]";
         lore.add(ChatColor.GRAY + "アイテム: " + ChatColor.WHITE + itemName + ChatColor.GRAY + countName);
         return lore;
@@ -83,7 +89,7 @@ public class ItemGiveAction implements ClickAction {
         private PanelItem overridable;
 
         public Configurator(Player player, ItemConfig itemConfig, Runnable done) {
-            super(player, 27, ChatColor.DARK_AQUA + "与えるアイテムを設定");
+            super(player, 27, ChatColor.DARK_AQUA + "所持アイテムを設定");
             this.done = done;
             this.itemConfig = itemConfig;
         }
@@ -102,7 +108,7 @@ public class ItemGiveAction implements ClickAction {
                                             ChatColor.GRAY + "個数: " + ChatColor.GOLD + itemStack.getAmount(),
                                             "",
                                             ChatColor.GRAY + "左クリックで個数を増やし、右クリックで減らす。",
-                                    ChatColor.GRAY + "シフト押しで8個ずつ変更する");
+                                            ChatColor.GRAY + "シフト押しで8個ずつ変更する");
                                     if (meta.getLore() != null) {
                                         lore.add(ChatColor.DARK_GRAY + "================================");
                                         lore.addAll(meta.getLore());
@@ -158,7 +164,7 @@ public class ItemGiveAction implements ClickAction {
             slots[12] = new PanelItem(null)
                     .setItemBuilder((p) -> {
                         Material material = Material.IRON_NUGGET;
-                        String color = ChatColor.GRAY.toString() + ChatColor.ITALIC;;
+                        String color = ChatColor.GRAY.toString() + ChatColor.ITALIC;
                         String color2 = color;
                         if (itemStack != null) {
                             if (!itemStack.getType().equals(itemConfig.getIcon().getItemStack().getType())) {
@@ -213,27 +219,27 @@ public class ItemGiveAction implements ClickAction {
     }
 
 
-    public static class Creator implements ClickActionCreator<ItemGiveAction> {
+    public static class Creator implements ConditionCreator<ItemHasCondition> {
 
         @Override
-        public @NotNull ItemGiveAction create() {
-            return new ItemGiveAction(null);
+        public @NotNull ItemHasCondition create() {
+            return new ItemHasCondition(null);
         }
 
         @Override
-        public @Nullable ItemGiveAction createFromConfig(Map<?, ?> config) {
+        public @Nullable ItemHasCondition createFromConfig(Map<?, ?> config) {
             ItemStack itemStack = (ItemStack) config.get("itemstack");
-            return (itemStack != null) ? new ItemGiveAction(itemStack.clone()) : null;
+            return (itemStack != null) ? new ItemHasCondition(itemStack.clone()) : null;
         }
 
         @Override
         public @NotNull ItemStack getSelectIcon() {
-            return PanelItem.createItem(Material.GOLD_NUGGET, ChatColor.GOLD + "アイテムを与える").getItemStack();
+            return PanelItem.createItem(Material.BRICK, ChatColor.GOLD + "アイテム所持").getItemStack();
         }
 
         @Override
-        public @NotNull String getActionId() {
-            return "giveitem";
+        public @NotNull String getConditionId() {
+            return "hasitem";
         }
     }
 }

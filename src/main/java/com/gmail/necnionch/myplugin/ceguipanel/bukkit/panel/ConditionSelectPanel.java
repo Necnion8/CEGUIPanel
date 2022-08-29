@@ -5,6 +5,8 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIPanel;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUISize;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.PanelItem;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.action.ClickActionCreator;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.ConditionCreator;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.EmptyCondition;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -13,13 +15,13 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class ActionSelectPanel extends GUIPanel {
+public class ConditionSelectPanel extends GUIPanel {
 
     private final GUIPanelManager mgr;
-    private final Consumer<Optional<ClickActionCreator<?>>> accept;
+    private final Consumer<Optional<ConditionCreator<?>>> accept;
 
-    public ActionSelectPanel(GUIPanelManager mgr, Player player, Consumer<Optional<ClickActionCreator<?>>> accept) {
-        super(player, ChatColor.DARK_PURPLE + "アクション選択", GUISize.CHEST9X6, null);
+    public ConditionSelectPanel(GUIPanelManager mgr, Player player, Consumer<Optional<ConditionCreator<?>>> accept) {
+        super(player, ChatColor.DARK_PURPLE + "条件選択", GUISize.CHEST9X6, null);
         this.mgr = mgr;
         this.accept = accept;
     }
@@ -27,15 +29,16 @@ public class ActionSelectPanel extends GUIPanel {
     @Override
     public int getSize() {
         Collection<ClickActionCreator<?>> creators = mgr.getActionCreators().values();
-        if (9 > creators.size())
+        int size = creators.size() + 1;
+        if (9 > size)
             return 9;
-        else if (18 > creators.size())
+        else if (18 > size)
             return 18;
-        else if (27 > creators.size())
+        else if (27 > size)
             return 27;
-        else if (36 > creators.size())
+        else if (36 > size)
             return 36;
-        else if (45 > creators.size())
+        else if (45 > size)
             return 45;
         else
             return 54;
@@ -45,13 +48,16 @@ public class ActionSelectPanel extends GUIPanel {
     public PanelItem[] build() {
         PanelItem[] slots = new PanelItem[getSize()];
 
-        Collection<ClickActionCreator<?>> creators = mgr.getActionCreators().values();
+        Collection<ConditionCreator<?>> creators = mgr.getConditionCreators().values();
 
         slots[0] = PanelItem.createItem(Material.OAK_DOOR, ChatColor.RED + "戻る")
                 .setClickListener((e, p) -> accept.accept(Optional.empty()));
 
-        int slot = 1;
-        for (ClickActionCreator<?> creator : creators) {
+        slots[1] = PanelItem.createItem(Material.BARRIER, ChatColor.GOLD + "なし")
+                .setClickListener((e, p) -> accept.accept(Optional.of(new EmptyCondition.Creator())));
+
+        int slot = 2;
+        for (ConditionCreator<?> creator : creators) {
             slots[slot++] = new PanelItem(creator.getSelectIcon()).setClickListener((e, p) -> accept.accept(Optional.of(creator)));
             if (slots.length <= slot)
                 break;
@@ -59,6 +65,5 @@ public class ActionSelectPanel extends GUIPanel {
 
         return slots;
     }
-
 
 }

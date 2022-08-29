@@ -2,5 +2,5 @@ name: CEGUIPanel
 version: '${version}'
 main: com.gmail.necnionch.myplugin.ceguipanel.bukkit.GUIPanelPlugin
 api-version: 1.15
-depend: [ CommandAPI, NBTAPI ]
+depend: [ CommandAPI ]
 authors: [ Necnion8 ]

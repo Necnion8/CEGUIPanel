@@ -1,4 +1,4 @@
-package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.required;
+package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition;
 
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public interface ClickConditionCreator<C extends ClickCondition> {
+public interface ConditionCreator<C extends Condition> {
 
     @NotNull C create();
 

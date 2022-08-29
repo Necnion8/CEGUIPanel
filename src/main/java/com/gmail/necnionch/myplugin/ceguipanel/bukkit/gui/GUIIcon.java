@@ -1,34 +1,44 @@
 package com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui;
 
-import com.google.common.collect.Lists;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class GUIIcon {
 
-    private @NotNull
-    final String display;
-    private final @NotNull ItemStack itemStack;
-    private final @NotNull List<String> lores;
+    private @NotNull ItemStack itemStack;
 
-    public GUIIcon(@NotNull String display, @NotNull List<String> lores, @NotNull ItemStack itemStack) {
-        this.display = display;
+    public GUIIcon(@NotNull ItemStack itemStack) {
         this.itemStack = itemStack;
-        this.lores = Lists.newArrayList(lores);
     }
 
-    public @NotNull String getDisplay() {
-        return display;
+    public void setItemStack(@NotNull ItemStack itemStack) {
+        this.itemStack = itemStack;
     }
 
     public @NotNull ItemStack getItemStack() {
         return itemStack;
     }
 
-    public @NotNull List<String> lores() {
-        return lores;
+    public @NotNull ItemStack buildItemStack(Player player) {  // TODO: Tellraw JSON でフォーマットする
+        ItemStack itemStack = this.itemStack.clone();
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta != null) {
+//            meta.setDisplayName(Optional.ofNullable(display)
+//                    .map(s -> ChatColor.translateAlternateColorCodes('&', s))
+//                    .orElse(null));
+//            meta.setLore(lore.stream()
+//                    .map(s -> ChatColor.translateAlternateColorCodes('&', s))
+//                    .collect(Collectors.toList()));
+//            itemStack.setItemMeta(meta);
+        }
+        return itemStack;
+    }
+
+
+    public GUIIcon copy() {
+        return new GUIIcon(itemStack.clone());
     }
 
 }

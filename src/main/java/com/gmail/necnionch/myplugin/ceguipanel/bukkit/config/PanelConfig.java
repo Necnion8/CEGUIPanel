@@ -4,23 +4,24 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.GUIPanelManager;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIIcon;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUISize;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.action.ClickAction;
-import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.required.ClickCondition;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.action.ClickActionCreator;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.Condition;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.ConditionCreator;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class PanelConfig {
-    private @NotNull
-    final String name;
-    private final @NotNull GUISize size;
+    private @NotNull final String name;
+    private @NotNull String title;
+    private @NotNull GUISize size;
     private final List<ItemConfig> items;
-    private @NotNull final String title;
 
     public PanelConfig(@NotNull String name, @NotNull String title, @NotNull GUISize size, List<ItemConfig> items) {
         this.name = name;
@@ -41,8 +42,66 @@ public class PanelConfig {
         return title;
     }
 
-    public List<ItemConfig> getItems() {
+    public void setTitle(@NotNull String title) {
+        this.title = title;
+    }
+
+    public void setSize(@NotNull GUISize size) {
+        this.size = size;
+    }
+
+    public List<ItemConfig> items() {
         return items;
+    }
+
+
+    public Map<String, Object> serialize(GUIPanelManager mgr) {
+        Map<String, Object> data = Maps.newHashMap();
+
+        data.put("display", title);
+        data.put("size", size.name().toLowerCase(Locale.ROOT));
+
+        List<Map<String, Object>> slots = Lists.newArrayList();
+        data.put("slots", slots);
+
+        for (ItemConfig itemConfig : items) {
+            Map<String, Object> itemData = Maps.newHashMap();
+            itemData.put("slot", itemConfig.getSlot());
+            if (itemConfig.getWeight() != 1)
+                itemData.put("weight", itemConfig.getWeight());
+
+            String actionName = mgr.getActionCreator(itemConfig.getClickAction().getClass()).getActionId();
+            itemData.put("action", actionName);
+            itemConfig.getClickAction().serialize(itemData);
+
+            Optional.ofNullable(itemConfig.getClickCondition()).ifPresent((cond -> {
+                Map<String, Object> condData = Maps.newHashMap();
+
+                String condName = mgr.getConditionCreator(cond.getClass()).getConditionId();
+                condData.put("type", condName);
+                cond.serialize(condData);
+
+                itemData.put("click_condition", condData);
+            }));
+
+            Optional.ofNullable(itemConfig.getViewCondition()).ifPresent((cond -> {
+                Map<String, Object> condData = Maps.newHashMap();
+
+                String condName = mgr.getConditionCreator(cond.getClass()).getConditionId();
+                condData.put("type", condName);
+                cond.serialize(condData);
+
+                itemData.put("view_condition", condData);
+            }));
+
+            GUIIcon icon = itemConfig.getIcon();
+            Map<String, Object> iconData = Maps.newHashMap();
+            iconData.put("itemstack", icon.getItemStack().clone());
+            itemData.put("icon", iconData);
+
+            slots.add(itemData);
+        }
+        return data;
     }
 
     public static PanelConfig deserialize(GUIPanelManager mgr, String name, Map<String, Object> data) {
@@ -61,47 +120,67 @@ public class PanelConfig {
             if (!(eObject instanceof Map))
                 continue;
 
-            Map<String, Object> slotEntry = ((Map<?, ?>) eObject).entrySet().stream()
-                    .filter(e -> e.getKey() instanceof String)
-                    .collect(Collectors.toMap(e -> (String) e.getKey(), Map.Entry::getValue));
+            Map<?, ?> slotEntry = (Map<?, ?>) eObject;
+//            Map<String, Object> slotEntry = ((Map<?, ?>) eObject).entrySet().stream()
+//                    .filter(e -> e.getKey() instanceof String)
+//                    .collect(Collectors.toMap(e -> (String) e.getKey(), Map.Entry::getValue));
 
-            int slot = (int) slotEntry.get("slot");
+            int slot = (Integer) slotEntry.get("slot");
+            int weight = 1;
+            if (slotEntry.get("weight") instanceof Integer) {
+                weight = (Integer) slotEntry.get("weight");
+            }
 
             String actionName = (String) slotEntry.get("action");
-            Class<ClickAction> clickActionClass = mgr.getActionClasses().get(actionName);
-            ClickAction clickAction = mgr.createClickActionFromConfig(clickActionClass, slotEntry);
+            ClickAction clickAction = null;
+            ClickActionCreator<?> actionCreator = mgr.getActionCreators().get(actionName);
+            if (actionCreator != null)
+                clickAction = actionCreator.createFromConfig(slotEntry);
             if (clickAction == null)
                 throw new IllegalStateException("Failed to create ClickAction: " + actionName);
 
-            ClickCondition clickCondition = null;
-            if (slotEntry.get("required") instanceof Map) {
-                String conditionName = (String) slotEntry.get("required");
-                Class<ClickCondition> clickConditionClass = mgr.getConditionClasses().get(conditionName);
-                clickCondition = mgr.createClickConditionFromConfig(clickConditionClass, ((Map<?, ?>) slotEntry.get("required")));
+            Condition clickCondition = null;
+            if (slotEntry.get("click_condition") instanceof Map) {
+                Map<?, ?> requiredEntry = (Map<?, ?>) slotEntry.get("click_condition");
+                String conditionName = (String) requiredEntry.get("type");
+                ConditionCreator<?> conditionCreator = mgr.getConditionCreators().get(conditionName);
+                if (conditionCreator != null)
+                    clickCondition = conditionCreator.createFromConfig(requiredEntry);
+                if (clickCondition == null) {
+                    mgr.getLogger().severe("Failed to create click condition: " + conditionName);
+                    continue;
+                }
+            }
+
+            Condition viewCondition = null;
+            if (slotEntry.get("view_condition") instanceof Map) {
+                Map<?, ?> requiredEntry = (Map<?, ?>) slotEntry.get("view_condition");
+                String conditionName = (String) requiredEntry.get("type");
+                ConditionCreator<?> conditionCreator = mgr.getConditionCreators().get(conditionName);
+                if (conditionCreator != null)
+                    viewCondition = conditionCreator.createFromConfig(requiredEntry);
+                if (viewCondition == null) {
+                    mgr.getLogger().severe("Failed to create view condition: " + conditionName);
+                    continue;
+                }
             }
 
             GUIIcon icon = null;
             if (slotEntry.get("icon") instanceof Map) {
-                Map<String, ?> iconEntry = ((Map<?, ?>) slotEntry.get("icon")).entrySet().stream()
-                        .filter(e -> e.getKey() instanceof String)
-                        .collect(Collectors.toMap(e -> (String) e.getKey(), Map.Entry::getValue));
-
-                if (iconEntry.get("itemstack") instanceof Map) {
-                    //noinspection unchecked
-                    ItemStack itemStack = ItemStack.deserialize(((Map<String, Object>) iconEntry.get("itemstack")));
-                    String display = (String) iconEntry.get("display");
-                    List<String> lores = Collections.emptyList();
-                    if (iconEntry.get("lores") instanceof List) {
-                        lores = ((List<?>) iconEntry.get("lores")).stream()
-                                .filter(e -> e instanceof String)
-                                .map(e -> (String) e)
-                                .collect(Collectors.toList());
-                    }
-
-                    icon = new GUIIcon(display, lores, itemStack);
+                try {
+                    Map<?, ?> iconEntry = (Map<?, ?>) slotEntry.get("icon");
+                    ItemStack itemStack = (ItemStack) iconEntry.get("itemstack");
+                    if (itemStack != null)
+                        icon = new GUIIcon(itemStack.clone());
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
-            items.add(new ItemConfig(slot, clickAction, clickCondition, icon));
+            if (icon == null) {
+                mgr.getLogger().severe("Icon has not set: slot " + slot);
+                continue;
+            }
+            items.add(new ItemConfig(slot, clickAction, clickCondition, viewCondition, icon, weight));
         }
 
         return new PanelConfig(name, displayName, size, items);

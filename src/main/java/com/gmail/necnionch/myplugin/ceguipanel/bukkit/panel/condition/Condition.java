@@ -1,4 +1,4 @@
-package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.action;
+package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition;
 
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.ItemConfig;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIPanel;
@@ -9,9 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public interface ClickAction {
+public interface Condition {
 
-    boolean action(GUIPanel panel, Player player);
+    boolean check(GUIPanel panel, Player player);
+
+    default void complete(GUIPanel panel, Player player) {}
 
     @Nullable List<String> getDescription(Player player);
 
@@ -19,6 +21,6 @@ public interface ClickAction {
         done.run();
     }
 
-    void serialize(Map<String, Object> config);  // todo save
+    void serialize(Map<String, Object> config);
 
 }

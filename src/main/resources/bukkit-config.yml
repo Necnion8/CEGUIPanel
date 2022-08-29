@@ -1,5 +1,4 @@
 
-
 panels:
   example:
     display: "Display Title"
@@ -9,10 +8,19 @@ panels:
         action: open
         panel: example2
         icon:
-          display: "Icon Display"
+          display: "Icon Display Disabled"
           lores: []
           itemstack:
             ==: org.bukkit.ItemStack
+
+      - slot: 0
+        action: open
+        panel: example2
+        icon:
+          display: "Icon Display"
+          itemstack:
+            ==: org.bukkit.ItemStack
+            type: BARRIER
 
       - slot: 1
         action: close
@@ -46,7 +54,7 @@ panels:
         required:
           type: scoreboard
           objective: objective_name
-          name: @s
+          name: "@s"
           match_type: equal  # ==, >=, <=, >, <
           value: 1
 

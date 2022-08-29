@@ -6,20 +6,16 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.*;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -31,17 +27,20 @@ public abstract class Panel {
     private final EventListener listener = new EventListener();
     private Inventory inventory;
     private final Player player;
-    private final Map<ItemStack, PanelItem> cachedItems = new HashMap<>();
+//    private final Map<ItemStack, PanelItem> cachedItems = Maps.newLinkedHashMap();
+    private PanelItem[] cachedItems;
     private final ItemStack backgroundItem;
     private MessageHandler messageHandler;
     private MessageListener messageListener;
     private int lastInvSize;
     private String lastInvTitle;
+    private InventoryType lastInvType = InventoryType.CHEST;
 
     private Panel backPanel;
+    private @Nullable Boolean openParentWhenClosing = null;
 
 
-    public Panel(Player player, int size, String title, ItemStack background) {
+    public Panel(Player player, int size, String title, @Nullable ItemStack background) {
 //        this.inventory = Bukkit.createInventory(null, size, invTitle);
         this.player = player;
         backgroundItem = background;
@@ -49,17 +48,38 @@ public abstract class Panel {
         this.lastInvTitle = title;
     }
 
+    public Panel(Player player, InventoryType invType, int size, String title, @Nullable ItemStack background) {
+//        this.inventory = Bukkit.createInventory(null, size, invTitle);
+        this.player = player;
+        backgroundItem = background;
+        this.lastInvType = invType;
+        this.lastInvSize = size;
+        this.lastInvTitle = title;
+    }
+
     public Panel(Player player, int size, String title) {
-        this(player, size, title, PanelItem.createItem(Material.BLACK_STAINED_GLASS_PANE, ChatColor.RESET.toString()).getItemStack());
+        this(player, size, title, PanelItem.createBlankItem().getItemStack());
     }
 
 
     public void open() {
         placeItems(build());
 
+        HandlerList.unregisterAll(listener);
         Bukkit.getPluginManager().registerEvents(listener, OWNER);
-        player.openInventory(inventory);
+        if (!inventory.getViewers().contains(player)) {
+            player.openInventory(inventory);
+        }
         PANELS.add(this);
+    }
+
+    public void open(@Nullable Panel parentPanel) {
+        backPanel = parentPanel;
+        this.open();
+    }
+
+    public void update() {
+        placeItems(build());
     }
 
     public void destroy(boolean close) {
@@ -91,16 +111,22 @@ public abstract class Panel {
 
 
     public void placeItems(PanelItem[] items) {
-        cachedItems.clear();
+//        cachedItems.clear();
+        cachedItems = items;
         if (inventory != null)
             inventory.clear();
 
         boolean reopen = false;
         int size = getSize();
         String title = getTitle();
-        if (inventory == null || lastInvSize != size || !lastInvTitle.equals(title)) {
+        InventoryType invType = getInventoryType();
+        if (inventory == null || lastInvSize != size || !lastInvTitle.equals(title) || !lastInvType.equals(invType)) {
             reopen = inventory != null;
-            inventory = Bukkit.createInventory(null, (size > 0) ? size : 9, (title != null) ? title : "");
+            if (InventoryType.CHEST.equals(lastInvType)) {
+                inventory = Bukkit.createInventory(null, (size > 0) ? size : 9, (title != null) ? title : "");
+            } else {
+                inventory = Bukkit.createInventory(null, lastInvType, (title != null) ? title : "");
+            }
             lastInvSize = size;
             lastInvTitle = title;
         }
@@ -112,9 +138,10 @@ public abstract class Panel {
             if (item != null)
                 itemStack = item.getItemBuilder().build(player);
 
-            if (itemStack != null) {
-                cachedItems.put(itemStack, item);
-            } else if (backgroundItem != null) {
+//            if (itemStack != null) {
+////                cachedItems.put(itemStack, item);
+//            } else if (backgroundItem != null) {
+            if (itemStack == null && backgroundItem != null) {
                 itemStack = backgroundItem.clone();
             }
 
@@ -127,8 +154,19 @@ public abstract class Panel {
 
     }
 
-    private PanelItem selectPanelItem(ItemStack item) {
-        return cachedItems.get(item);
+//    protected PanelItem selectPanelItem(ItemStack item) {
+//        for (Map.Entry<ItemStack, PanelItem> e : cachedItems) {
+//            if (e.getKey().equals(item))
+//                return e.getValue();
+//        }
+////        return cachedItems.get(item);
+//        return null;
+//    }
+
+    protected PanelItem selectPanelItem(int slotId) {
+        if (cachedItems == null || cachedItems.length <= slotId)
+            return null;
+        return cachedItems[slotId];
     }
 
     public void setMessageHandler(MessageHandler listener) {
@@ -151,6 +189,10 @@ public abstract class Panel {
         return lastInvTitle;
     }
 
+    public InventoryType getInventoryType() {
+        return lastInvType;
+    }
+
     public Panel setBackPanel(Panel backPanel) {
         this.backPanel = backPanel;
         return this;
@@ -158,14 +200,6 @@ public abstract class Panel {
 
     public Panel getBackPanel() {
         return backPanel;
-    }
-
-    public void close() {
-        if (backPanel != null) {
-            backPanel.open();
-        } else {
-            destroy(true);
-        }
     }
 
     public PanelItem createBackButton() {
@@ -198,12 +232,29 @@ public abstract class Panel {
         player.playSound(player.getLocation(), Sound.BLOCK_STONE_BREAK, .75f, 2f);
     }
 
+    public void playClickSound(Player player, Sound sound, float pitch) {
+        player.playSound(player.getLocation(), sound, .75f, pitch);
+    }
+
+    public boolean isOpenParentWhenClosing() {
+        return (openParentWhenClosing != null) ? openParentWhenClosing : backPanel != null && backPanel.isOpenParentWhenClosing();
+    }
+
+    public void setOpenParentWhenClosing(@Nullable Boolean open) {
+        this.openParentWhenClosing = open;
+    }
 
     abstract public PanelItem[] build();
 
     public boolean onClick(InventoryClickEvent event) {
         return false;
     }
+
+    public void onEvent(InventoryClickEvent event) {}
+
+    public void onEvent(InventoryCloseEvent event) {}
+
+    public void onEvent(InventoryDragEvent event) {}
 
 
 
@@ -216,14 +267,26 @@ public abstract class Panel {
 
         @EventHandler(priority = EventPriority.HIGH)
         public void onClose(InventoryCloseEvent event) {
+            onEvent(event);
+
             if (!inventory.equals(event.getInventory()))
                 return;
 
             destroy(false);
+
+            if (isOpenParentWhenClosing() && backPanel != null) {
+                Bukkit.getScheduler().runTaskLater(OWNER, () -> {  // hacky X(
+                    Inventory inv = event.getPlayer().getOpenInventory().getTopInventory();
+                    if (InventoryType.CRAFTING.equals(inv.getType()))  // non opened
+                        backPanel.open();
+                }, 0);
+            }
+
         }
 
         @EventHandler(priority = EventPriority.HIGH)
         public void onDrag(InventoryDragEvent event) {
+            onEvent(event);
             if (!inventory.equals(event.getInventory()))
                 return;
 
@@ -238,6 +301,7 @@ public abstract class Panel {
 
         @EventHandler(priority = EventPriority.HIGH)
         public void onClick(InventoryClickEvent event) {
+            onEvent(event);
             if (!inventory.equals(event.getInventory()))
                 return;
 
@@ -271,8 +335,7 @@ public abstract class Panel {
                         return;
                 }
 
-                ItemStack current = event.getCurrentItem();
-                PanelItem selected = selectPanelItem(current);
+                PanelItem selected = selectPanelItem(event.getSlot());
 
                 if (selected != null)
                     selected.getClickListener().click(event, player);
