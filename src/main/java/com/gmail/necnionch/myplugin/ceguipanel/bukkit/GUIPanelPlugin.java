@@ -56,6 +56,7 @@ public final class GUIPanelPlugin extends JavaPlugin {
                 .overrideSuggestions((s, a) -> Stream.of(GUISize.values()).map(ss -> ss.name().toLowerCase(Locale.ROOT)).toArray(String[]::new));
 
         new CommandAPICommand("ceguipanel")
+                .withPermission("ceguipanel.command.ceguipanel")
                 .withSubcommand(new CommandAPICommand("createpanel")
                         .withArguments(new StringArgument("name"))
                         .withArguments(guiSizeArgument)
