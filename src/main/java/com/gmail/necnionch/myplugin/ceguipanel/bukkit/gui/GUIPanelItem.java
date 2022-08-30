@@ -6,6 +6,7 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.Condition;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +68,9 @@ public class GUIPanelItem extends PanelItem {
     }
 
     public void handleClick(InventoryClickEvent event, Player player) {
+        if (!ClickType.LEFT.equals(event.getClick()))
+            return;
+
         if (clickCondition != null && !clickCondition.check(panel, player)) {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1, 0);
             return;

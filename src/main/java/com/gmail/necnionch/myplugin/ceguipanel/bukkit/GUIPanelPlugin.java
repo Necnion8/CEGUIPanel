@@ -4,6 +4,7 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.MainConfig;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.PanelConfig;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUISize;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.Panel;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.nms.NMSHandler;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.EditPanel;
 import com.google.common.collect.Lists;
 import dev.jorel.commandapi.CommandAPICommand;
@@ -29,6 +30,29 @@ public final class GUIPanelPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        boolean nmsComplete = false;
+        try {
+            nmsComplete = new NMSHandler(getLogger()).init();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        if (!nmsComplete) {
+            setEnabled(false);
+            return;
+        }
+
+        registerCommands();
+        mainConfig.load();
+        getServer().getServicesManager().register(GUIPanelManager.class, panelManager, this, ServicePriority.Normal);
+    }
+
+    @Override
+    public void onDisable() {
+        Panel.destroyAll();
+        getServer().getServicesManager().unregisterAll(this);
+    }
+
+    private void registerCommands() {
         Argument panelArgument = new StringArgument("panel")
                 .overrideSuggestions((s, a) -> panelManager.getPanelNames().toArray(new String[0]));
         Argument guiSizeArgument = new StringArgument("size")
@@ -91,16 +115,6 @@ public final class GUIPanelPlugin extends JavaPlugin {
                         .executesNative(this::execClose)
                 )
                 .register();
-
-
-        mainConfig.load();
-        getServer().getServicesManager().register(GUIPanelManager.class, panelManager, this, ServicePriority.Normal);
-    }
-
-    @Override
-    public void onDisable() {
-        Panel.destroyAll();
-        getServer().getServicesManager().unregisterAll(this);
     }
 
 

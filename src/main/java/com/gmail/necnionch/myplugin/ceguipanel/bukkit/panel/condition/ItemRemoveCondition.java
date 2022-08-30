@@ -65,7 +65,7 @@ public class ItemRemoveCondition implements Condition {
 
         for (ItemStack next : inv) {
             if (itemStack.isSimilar(next)) {
-                if (count >= next.getAmount()) {  // todo test
+                if (count >= next.getAmount()) {
                     count -= next.getAmount();
                     next.setAmount(0);
                 } else {

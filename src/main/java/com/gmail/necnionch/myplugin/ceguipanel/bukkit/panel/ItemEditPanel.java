@@ -2,14 +2,18 @@ package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel;
 
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.GUIPanelManager;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.ItemConfig;
-import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.*;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIIcon;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIPanel;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUISize;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.PanelItem;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.action.ClickAction;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.Condition;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.EmptyCondition;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.util.LineInput;
 import com.google.common.collect.Lists;
-import net.wesjd.anvilgui.AnvilGUI;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -233,22 +237,33 @@ public class ItemEditPanel extends GUIPanel {
                     if (ClickType.LEFT.equals(e.getClick())) {
                         GUIIcon icon = config.getIcon();
                         String name = Optional.ofNullable(icon.getItemStack().getItemMeta()).map(ItemMeta::getDisplayName).orElse("");
-                        new AnvilGUI.Builder()
-                                .plugin(Panel.OWNER)
-                                .title("表示名を入力")
-                                .text(name.replace('§', '&'))
-                                .onComplete((p1, s) -> {  // todo: format check tellraw json
-                                    ItemMeta meta = icon.getItemStack().getItemMeta();
-                                    if (meta != null) {
-                                        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', s));
-                                        icon.getItemStack().setItemMeta(meta);
-                                        editPanel.setChanged();
-                                    }
 
-                                    Bukkit.getScheduler().runTaskLater(Panel.OWNER, (@Nullable Runnable) this::open, 2);
-                                    return AnvilGUI.Response.text("");
-                                })
-                                .open(p);
+                        destroy(true);
+                        p.spigot().sendMessage(new ComponentBuilder()
+                                .append("= ").color(ChatColor.DARK_GRAY)
+                                .append("表示名をチャット欄に入力してください ").color(ChatColor.GOLD)
+                                .append("[中止]").color(ChatColor.DARK_AQUA)
+                                .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/"))
+                                .create()
+                        );
+                        p.spigot().sendMessage(new ComponentBuilder()
+                                .append("= ").color(ChatColor.DARK_GRAY)
+                                .append("現在の値: ").color(ChatColor.WHITE)
+                                .append(name.replace('§', '&')).event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, name.replace('§', '&')))
+                                .create());
+
+                        LineInput.listen(OWNER, p, r -> {
+                            r.ifPresent(s -> {
+                                ItemMeta meta = icon.getItemStack().getItemMeta();
+                                if (meta != null) {
+                                    meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', s));
+                                    icon.getItemStack().setItemMeta(meta);
+                                    editPanel.setChanged();
+                                }
+                            });
+                            this.open();
+                        });
+
                     } else if (ClickType.RIGHT.equals(e.getClick())) {
                         Optional.ofNullable(config.getIcon().getItemStack().getItemMeta()).ifPresent(meta -> {
                             meta.setDisplayName(null);
@@ -394,16 +409,28 @@ public class ItemEditPanel extends GUIPanel {
             if (ClickType.LEFT.equals(event.getClick())) {
                 // edit line
                 String line = Optional.ofNullable(getCurrentLine()).orElse("");
-                new AnvilGUI.Builder()
-                        .plugin(Panel.OWNER)
-                        .title("テキストを入力")
-                        .text(line.replace('§', '&'))
-                        .onComplete((p1, s) -> {  // todo: format check tellraw json
-                            setCurrentLine(ChatColor.translateAlternateColorCodes('&', s));
-                            Bukkit.getScheduler().runTaskLater(Panel.OWNER, (@Nullable Runnable) ItemEditPanel.this::open, 2);
-                            return AnvilGUI.Response.text("");
-                        })
-                        .open(player);
+
+                destroy(true);
+                player.spigot().sendMessage(new ComponentBuilder()
+                        .append("= ").color(ChatColor.DARK_GRAY)
+                        .append("行テキストをチャット欄に入力してください ").color(ChatColor.GOLD)
+                        .append("[中止]").color(ChatColor.DARK_AQUA)
+                        .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/"))
+                        .create()
+                );
+                player.spigot().sendMessage(new ComponentBuilder()
+                        .append("= ").color(ChatColor.DARK_GRAY)
+                        .append("現在の値: ").color(ChatColor.WHITE)
+                        .append(line.replace('§', '&'))
+                        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, line.replace('§', '&')))
+                        .create());
+
+                LineInput.listen(OWNER, player, r -> {
+                    r.ifPresent(s -> {
+                        setCurrentLine(ChatColor.translateAlternateColorCodes('&', s));
+                    });
+                    ItemEditPanel.this.open();
+                });
 
             } else if (ClickType.RIGHT.equals(event.getClick())) {
                 // next line

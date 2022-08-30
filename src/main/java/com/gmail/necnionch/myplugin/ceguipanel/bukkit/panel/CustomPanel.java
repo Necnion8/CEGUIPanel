@@ -7,15 +7,18 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUISize;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.PanelItem;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.Condition;
 import com.google.common.collect.Lists;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.List;
 
 public class CustomPanel extends GUIPanel {
 
     private final List<WeightItems<GUIPanelItem>> items;
+    private BukkitTask updateTask;
 
     public CustomPanel(Player player, String title, GUISize size, ItemStack background, List<WeightItems<GUIPanelItem>> items) {
         super(player, title, size, background);
@@ -41,6 +44,20 @@ public class CustomPanel extends GUIPanel {
         return slots;
     }
 
+    @Override
+    public void open() {
+        super.open();
+        if (updateTask != null)
+            updateTask.cancel();
+        updateTask = Bukkit.getScheduler().runTaskTimerAsynchronously(OWNER, this::update, 10, 10);
+    }
+
+    @Override
+    public void destroy(boolean close) {
+        if (updateTask != null)
+            updateTask.cancel();
+        super.destroy(close);
+    }
 
     public static CustomPanel create(Player player, PanelConfig config) {
         String title = config.getTitle();

@@ -1,6 +1,7 @@
 package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.action;
 
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.GUIPanelManager;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.GUIPanelPlugin;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.ItemConfig;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIPanel;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.Panel;
@@ -12,6 +13,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +53,8 @@ public class OpenAction implements ClickAction {
             nextPanel.open(panel);
             return true;
         }
-        return false;  // todo print warn
+        JavaPlugin.getPlugin(GUIPanelPlugin.class).getLogger().warning("Failed to open gui: " + panel);
+        return false;
     }
 
     @Override

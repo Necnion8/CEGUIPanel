@@ -4,12 +4,13 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.ItemConfig;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIPanel;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.Panel;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.PanelItem;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.nms.NMSHandler;
 import com.google.common.collect.Lists;
 import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.command.CommandException;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -50,15 +51,27 @@ public class FunctionAction implements ClickAction {
         if (functionName == null)
             return false;
 
-        // TODO: execute function
-        String line = "execute as " + player.getUniqueId() + " at @s run function " + functionName;
+//        String line = "execute as " + player.getUniqueId() + " at @s run function " + functionName;
+//        try {
+//            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line);
+//        } catch (CommandException e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+        String[] sp = functionName.split(":", 2);
+        NamespacedKey key;
         try {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line);
-        } catch (CommandException e) {
-            e.printStackTrace();
+            key = new NamespacedKey(sp[0], sp[1]);
+        } catch (IllegalArgumentException ignored) {
             return false;
         }
-        return true;
+
+        if (NMSHandler.getNMS().executeFunction(player, key)) {
+            if (!keepOpen)
+                panel.destroy();
+            return true;
+        }
+        return false;
     }
 
     @Override

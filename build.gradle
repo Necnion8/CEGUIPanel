@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:23.0.0'
     compileOnly 'org.spigotmc:spigot-api:1.15.2-R0.1-SNAPSHOT'
     implementation files("libs/CommandAPI.jar")
-    implementation group: 'de.tr7zw', name: 'item-nbt-api-plugin', version: '2.8.0'
+    implementation files("libs/spigot-1.15.2.jar")
 
     implementation 'net.wesjd:anvilgui:1.5.3-SNAPSHOT'
     collectJars 'net.wesjd:anvilgui:1.5.3-SNAPSHOT'

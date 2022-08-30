@@ -19,6 +19,6 @@ public interface ClickAction {
         done.run();
     }
 
-    void serialize(Map<String, Object> config);  // todo save
+    void serialize(Map<String, Object> config);
 
 }
