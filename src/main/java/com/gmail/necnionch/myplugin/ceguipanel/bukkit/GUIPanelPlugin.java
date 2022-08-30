@@ -8,10 +8,7 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.nms.NMSHandler;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.EditPanel;
 import com.google.common.collect.Lists;
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.arguments.Argument;
-import dev.jorel.commandapi.arguments.EntitySelectorArgument;
-import dev.jorel.commandapi.arguments.GreedyStringArgument;
-import dev.jorel.commandapi.arguments.StringArgument;
+import dev.jorel.commandapi.arguments.*;
 import dev.jorel.commandapi.wrappers.NativeProxyCommandSender;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -113,6 +110,10 @@ public final class GUIPanelPlugin extends JavaPlugin {
                 )
                 .withSubcommand(new CommandAPICommand("close")  // functionアクションを実行した後閉じるのに使う
                         .executesNative(this::execClose)
+                )
+                .withSubcommand(new CommandAPICommand("setnpc")
+                        .withArguments(panelArgument)
+                        .executes(this::execSetNPC)
                 )
                 .register();
     }
@@ -269,5 +270,17 @@ public final class GUIPanelPlugin extends JavaPlugin {
         return 0;
     }
 
+    private int execSetNPC(CommandSender sender, Object[] objects) {
+        String panelName = (String) objects[0];
+
+        PanelConfig panelConfig = panelManager.getPanelConfigByName(panelName);
+        if (panelConfig == null) {
+            sender.sendMessage(ChatColor.RED + "パネル " + panelName + " がありません");
+            return 0;
+        }
+
+        ((Player) sender).performCommand("npc command add ceguipanel open " + panelName + " %player%");
+        return 0;
+    }
 
 }
