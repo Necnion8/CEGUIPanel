@@ -11,6 +11,7 @@ import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -50,6 +51,7 @@ public class OpenAction implements ClickAction {
     public boolean action(GUIPanel panel, Player player) {
         GUIPanel nextPanel = getPanel(player);
         if (nextPanel != null) {
+            panel.playClickSound(Sound.BLOCK_LEVER_CLICK, 2);
             nextPanel.open(panel);
             return true;
         }

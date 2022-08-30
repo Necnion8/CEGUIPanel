@@ -5,6 +5,7 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.PanelItem;
 import com.google.common.collect.Lists;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,7 @@ public class CloseAction implements ClickAction {
     @Override
     public boolean action(GUIPanel panel, Player player) {
         if (panel.getBackPanel() != null) {
+            panel.playClickSound(Sound.BLOCK_LEVER_CLICK, 2);
             panel.getBackPanel().open();
         } else {
             panel.destroy(true);

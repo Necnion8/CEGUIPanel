@@ -23,6 +23,8 @@ import org.bukkit.entity.minecart.CommandMinecart;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.NoSuchElementException;
+
 public class v1_15_R1 implements NMS {
     @Override
     public @Nullable String formatTellrawJson(CommandSender sender, String json) throws CommandSyntaxException {
@@ -95,7 +97,13 @@ public class v1_15_R1 implements NMS {
 
     @Override
     public boolean executeFunction(CommandSender sender, NamespacedKey functionName) {
-        SimpleFunctionWrapper function = CommandAPIHandler.getInstance().getNMS().getFunction(functionName);
+        SimpleFunctionWrapper function;
+        System.out.println(functionName);
+        try {
+            function = CommandAPIHandler.getInstance().getNMS().getFunction(functionName);
+        } catch (NoSuchElementException e) {
+            function = null;
+        }
         if (function == null) {
             JavaPlugin.getPlugin(GUIPanelPlugin.class).getLogger().warning("Failed to execute function: " + functionName);
             return false;

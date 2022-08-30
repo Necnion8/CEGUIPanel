@@ -10,7 +10,7 @@ import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -58,17 +58,14 @@ public class FunctionAction implements ClickAction {
 //            e.printStackTrace();
 //            return false;
 //        }
-        String[] sp = functionName.split(":", 2);
-        NamespacedKey key;
-        try {
-            key = new NamespacedKey(sp[0], sp[1]);
-        } catch (IllegalArgumentException ignored) {
-            return false;
-        }
 
-        if (NMSHandler.getNMS().executeFunction(player, key)) {
-            if (!keepOpen)
+        if (NMSHandler.getNMS().executeFunction(player, functionName)) {
+            if (!keepOpen) {
                 panel.destroy();
+                panel.playClickSound(Sound.BLOCK_NOTE_BLOCK_BASS, 2);
+            } else {
+                panel.playClickSound(Sound.BLOCK_LEVER_CLICK, 2);
+            }
             return true;
         }
         return false;

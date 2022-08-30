@@ -76,9 +76,11 @@ public class GUIPanelItem extends PanelItem {
             return;
         }
 
-        if (clickAction.action(panel, player))
+        if (clickAction.action(panel, player)) {
             if (clickCondition != null)
                 clickCondition.complete(panel, player);
+            panel.update();
+        }
     }
 
 }

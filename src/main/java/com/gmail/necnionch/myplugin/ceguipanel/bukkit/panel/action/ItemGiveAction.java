@@ -42,8 +42,9 @@ public class ItemGiveAction implements ClickAction {
     public boolean action(GUIPanel panel, Player player) {
         if (itemStack != null && !itemStack.getType().isAir()) {
             player.getInventory().addItem(itemStack.clone()).forEach((i, itemStack) ->
-            player.getWorld().dropItemNaturally(player.getLocation(), itemStack)
+                    player.getWorld().dropItemNaturally(player.getLocation(), itemStack)
             );
+            panel.playClickSound(Sound.BLOCK_NOTE_BLOCK_BELL, 1.6f);
             return true;
         }
         return false;

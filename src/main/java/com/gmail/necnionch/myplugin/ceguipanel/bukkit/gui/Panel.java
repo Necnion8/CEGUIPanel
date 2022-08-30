@@ -16,6 +16,7 @@ import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -113,8 +114,8 @@ public abstract class Panel {
     public void placeItems(PanelItem[] items) {
 //        cachedItems.clear();
         cachedItems = items;
-        if (inventory != null)
-            inventory.clear();
+//        if (inventory != null)
+//            inventory.clear();
 
         boolean reopen = false;
         int size = getSize();
@@ -147,6 +148,10 @@ public abstract class Panel {
 
             inventory.setItem(index, itemStack);
             index++;
+        }
+        int emptySlots = inventory.getSize() - items.length;
+        for (int i = 0; i < emptySlots; i++) {
+            inventory.setItem(items.length + i + 1, Optional.ofNullable(backgroundItem).map(ItemStack::clone).orElse(null));
         }
 
         if (reopen)
@@ -233,6 +238,10 @@ public abstract class Panel {
     }
 
     public void playClickSound(Player player, Sound sound, float pitch) {
+        player.playSound(player.getLocation(), sound, .75f, pitch);
+    }
+
+    public void playClickSound(Sound sound, float pitch) {
         player.playSound(player.getLocation(), sound, .75f, pitch);
     }
 
