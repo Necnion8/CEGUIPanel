@@ -38,6 +38,7 @@ public class CustomPanel extends GUIPanel {
                 if (cond != null && !cond.check(this, getPlayer()))
                     continue;
                 slots[weights.getSlot()] = item;
+                break;
             }
         }
 
