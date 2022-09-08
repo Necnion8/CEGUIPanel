@@ -194,7 +194,7 @@ public final class GUIPanelPlugin extends JavaPlugin {
         }
 
         panelManager.removePanelConfigByName(panelConfig.getName());
-        sender.sendMessage(ChatColor.RED + "パネル " + panelName + " がありません");
+        sender.sendMessage(ChatColor.GOLD + "パネル " + panelName + " を削除しました");
         return 0;
     }
 
@@ -299,7 +299,7 @@ public final class GUIPanelPlugin extends JavaPlugin {
             return 0;
         }
 
-        ((Player) sender).performCommand("npc command add ceguipanel open " + panelName + " %player%");
+        ((Player) sender).performCommand("npc command add ceguipanel open " + panelName + " \"\"%player%\"\"");
         return 0;
     }
 
