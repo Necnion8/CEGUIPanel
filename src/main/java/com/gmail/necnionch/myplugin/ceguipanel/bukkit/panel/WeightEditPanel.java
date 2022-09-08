@@ -2,6 +2,7 @@ package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel;
 
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.GUIPanelManager;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.ItemConfig;
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIIcon;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIPanel;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUISize;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.PanelItem;
@@ -145,6 +146,26 @@ public class WeightEditPanel extends GUIPanel {
                 swapping = null;
                 event.setCursor(null);
                 this.update();
+
+            } else {  // new entry
+                Optional.ofNullable(event.getCursor()).ifPresent(cursor -> {
+                    if (event.getSlot() < size.getSize()) {
+                        ItemStack icon = cursor.clone();
+                        icon.setAmount(1);
+
+                        ItemConfig newEntry = new ItemConfig(weights.getSlot(), mgr.getDefaultActionCreator().create(), null, null, new GUIIcon(icon), 1);
+                        weights.items().add(newEntry);
+
+                        Bukkit.getScheduler().runTaskLater(OWNER, () -> {
+                            event.getView().setCursor(null);
+                            finish(newEntry);
+                        }, 1);
+
+                    } else {
+                        Bukkit.getScheduler().runTaskLater(OWNER, () -> event.getView().setCursor(null), 1);
+                    }
+                    player.getInventory().addItem(cursor);
+                });
             }
             return true;
         }
