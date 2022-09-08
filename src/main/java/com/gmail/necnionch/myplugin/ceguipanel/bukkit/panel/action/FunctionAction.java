@@ -1,10 +1,10 @@
 package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.action;
 
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.GUIPanelPlugin;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.config.ItemConfig;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIPanel;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.Panel;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.PanelItem;
-import com.gmail.necnionch.myplugin.ceguipanel.bukkit.nms.NMSHandler;
 import com.google.common.collect.Lists;
 import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.Bukkit;
@@ -59,7 +59,9 @@ public class FunctionAction implements ClickAction {
 //            return false;
 //        }
 
-        if (NMSHandler.getNMS().executeFunction(player, functionName)) {
+//        if (NMSHandler.getNMS().executeFunction(player, functionName)) {
+
+        GUIPanelPlugin.executeFunction(player, functionName);
             if (!keepOpen) {
                 panel.destroy();
                 panel.playClickSound(Sound.BLOCK_NOTE_BLOCK_BASS, 2);
@@ -67,8 +69,8 @@ public class FunctionAction implements ClickAction {
                 panel.playClickSound(Sound.BLOCK_LEVER_CLICK, 2);
             }
             return true;
-        }
-        return false;
+//        }
+//        return false;
     }
 
     @Override

@@ -98,7 +98,6 @@ public class v1_15_R1 implements NMS {
     @Override
     public boolean executeFunction(CommandSender sender, NamespacedKey functionName) {
         SimpleFunctionWrapper function;
-        System.out.println(functionName);
         try {
             function = CommandAPIHandler.getInstance().getNMS().getFunction(functionName);
         } catch (NoSuchElementException e) {

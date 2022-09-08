@@ -8,12 +8,19 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.nms.NMSHandler;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.EditPanel;
 import com.google.common.collect.Lists;
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.arguments.*;
+import dev.jorel.commandapi.arguments.Argument;
+import dev.jorel.commandapi.arguments.EntitySelectorArgument;
+import dev.jorel.commandapi.arguments.GreedyStringArgument;
+import dev.jorel.commandapi.arguments.StringArgument;
 import dev.jorel.commandapi.wrappers.NativeProxyCommandSender;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.minecart.CommandMinecart;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -123,6 +130,18 @@ public final class GUIPanelPlugin extends JavaPlugin {
     public GUIPanelManager getPanelManager() {
         return panelManager;
     }
+
+    public static void executeFunction(Player executor, String functionKey) {
+        Location location = executor.getLocation();
+        location.setY(-256);
+        CommandMinecart sender = (CommandMinecart) executor.getWorld().spawnEntity(location, EntityType.MINECART_COMMAND);
+        try {
+            Bukkit.dispatchCommand(sender, String.format("execute as \"%s\" at @s run function %s", executor.getUniqueId(), functionKey));
+        } finally {
+            sender.remove();
+        }
+    }
+
 
     private int execClose(NativeProxyCommandSender s, Object[] objects) {
         CommandSender executor = s.getCallee();
