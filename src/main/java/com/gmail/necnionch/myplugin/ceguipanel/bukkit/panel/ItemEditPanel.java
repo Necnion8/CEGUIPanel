@@ -43,7 +43,7 @@ public class ItemEditPanel extends GUIPanel {
         this.weights = weights;
         this.editPanel = editPanel;
         this.currentItemConfig = weights.items().get(0);
-        this.loreEditor = new LoreEditor(currentItemConfig);
+        this.loreEditor = new LoreEditor();
     }
 
     @Override
@@ -316,15 +316,10 @@ public class ItemEditPanel extends GUIPanel {
 
 
     private class LoreEditor {
-        private final ItemConfig config;
         private int cursor = 0;
 
-        public LoreEditor(ItemConfig config) {
-            this.config = config;
-        }
-
         public List<String> buildEditIconLore() {
-            ItemMeta meta = config.getIcon().getItemStack().getItemMeta();
+            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
             if (meta == null)
                 return Collections.emptyList();
 
@@ -350,7 +345,7 @@ public class ItemEditPanel extends GUIPanel {
         }
 
         public void nextCursor() {
-            ItemMeta meta = config.getIcon().getItemStack().getItemMeta();
+            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
             if (meta == null) {
                 cursor = 0;
                 return;
@@ -367,7 +362,7 @@ public class ItemEditPanel extends GUIPanel {
         }
 
         public @Nullable String getCurrentLine() {
-            ItemMeta meta = config.getIcon().getItemStack().getItemMeta();
+            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
             if (meta == null)
                 return null;
             List<String> lore = Optional.ofNullable(meta.getLore()).orElseGet(Lists::newArrayList);
@@ -377,7 +372,7 @@ public class ItemEditPanel extends GUIPanel {
         }
 
         public void setCurrentLine(String line) {
-            ItemMeta meta = config.getIcon().getItemStack().getItemMeta();
+            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
             if (meta == null)
                 return;
             List<String> lore = Optional.ofNullable(meta.getLore()).orElseGet(Lists::newArrayList);
@@ -388,19 +383,19 @@ public class ItemEditPanel extends GUIPanel {
                 lore.add(cursor, line);
             }
             meta.setLore(lore);
-            config.getIcon().getItemStack().setItemMeta(meta);
+            currentItemConfig.getIcon().getItemStack().setItemMeta(meta);
             editPanel.setChanged();
         }
 
         public void removeCurrentLine() {
-            ItemMeta meta = config.getIcon().getItemStack().getItemMeta();
+            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
             if (meta == null)
                 return;
             List<String> lore = Optional.ofNullable(meta.getLore()).orElseGet(Lists::newArrayList);
             if (cursor < lore.size()) {
                 lore.remove(cursor);
                 meta.setLore(lore);
-                config.getIcon().getItemStack().setItemMeta(meta);
+                currentItemConfig.getIcon().getItemStack().setItemMeta(meta);
                 editPanel.setChanged();
             }
         }
