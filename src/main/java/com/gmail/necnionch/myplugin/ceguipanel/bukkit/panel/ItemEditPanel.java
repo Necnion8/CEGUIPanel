@@ -54,21 +54,30 @@ public class ItemEditPanel extends GUIPanel {
 
         slots[10] = swappable = new PanelItem(editPanel.buildEditingItem(config, weights, player))
                 .setClickListener((e, p) -> {
-                    if (!InventoryAction.SWAP_WITH_CURSOR.equals(e.getAction()))
-                        return;
-                    ItemStack cursor = e.getCursor();
-                    if (cursor == null)
-                        return;
-                    e.setCursor(null);
-                    p.getInventory().addItem(cursor);
+                    if (InventoryAction.SWAP_WITH_CURSOR.equals(e.getAction())) {
+                        ItemStack cursor = e.getCursor();
+                        if (cursor == null)
+                            return;
+                        e.setCursor(null);
+                        p.getInventory().addItem(cursor);
 
-                    new IconEditPanel(player, config.getIcon().getItemStack(), cursor, r -> {
-                        r.ifPresent(itemStack -> {
-                            config.getIcon().setItemStack(itemStack);
-                            editPanel.setChanged();
-                        });
-                        this.open();
-                    }).open(this);
+                        new IconEditPanel(player, config.getIcon().getItemStack(), cursor, r -> {
+                            r.ifPresent(itemStack -> {
+                                config.getIcon().setItemStack(itemStack);
+                                editPanel.setChanged();
+                            });
+                            this.open();
+                        }).open(this);
+
+                    } else if (ClickType.LEFT.equals(e.getClick()) || ClickType.RIGHT.equals(e.getClick())) {
+                        new IconEditPanel(player, config.getIcon().getItemStack(), null, r -> {
+                            r.ifPresent(itemStack -> {
+                                config.getIcon().setItemStack(itemStack);
+                                editPanel.setChanged();
+                            });
+                            this.open();
+                        }).open(this);
+                    }
                 });
 
         slots[13] = new PanelItem(null)
