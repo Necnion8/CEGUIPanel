@@ -234,15 +234,15 @@ public abstract class Panel {
     }
 
     public void playClickSound(Player player) {
-        player.playSound(player.getLocation(), Sound.BLOCK_STONE_BREAK, .75f, 2f);
+//        player.playSound(player.getLocation(), Sound.BLOCK_STONE_BREAK, .75f, 2f);
     }
 
     public void playClickSound(Player player, Sound sound, float pitch) {
-        player.playSound(player.getLocation(), sound, .75f, pitch);
+//        player.playSound(player.getLocation(), sound, .75f, pitch);
     }
 
     public void playClickSound(Sound sound, float pitch) {
-        player.playSound(player.getLocation(), sound, .75f, pitch);
+//        player.playSound(player.getLocation(), sound, .75f, pitch);
     }
 
     public boolean isOpenParentWhenClosing() {

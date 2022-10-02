@@ -72,7 +72,7 @@ public class GUIPanelItem extends PanelItem {
             return;
 
         if (clickCondition != null && !clickCondition.check(panel, player)) {
-            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1, 0);
+            panel.playClickSound(player, Sound.BLOCK_NOTE_BLOCK_BASS, 0);
             return;
         }
 
