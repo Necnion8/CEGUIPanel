@@ -8,10 +8,7 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.nms.NMSHandler;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.EditPanel;
 import com.google.common.collect.Lists;
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.arguments.Argument;
-import dev.jorel.commandapi.arguments.EntitySelectorArgument;
-import dev.jorel.commandapi.arguments.GreedyStringArgument;
-import dev.jorel.commandapi.arguments.StringArgument;
+import dev.jorel.commandapi.arguments.*;
 import dev.jorel.commandapi.wrappers.NativeProxyCommandSender;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -24,6 +21,7 @@ import org.bukkit.entity.minecart.CommandMinecart;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -58,9 +56,9 @@ public final class GUIPanelPlugin extends JavaPlugin {
 
     private void registerCommands() {
         Argument panelArgument = new StringArgument("panel")
-                .overrideSuggestions((s, a) -> panelManager.getPanelNames().toArray(new String[0]));
+                .replaceSuggestions(ArgumentSuggestions.strings(i -> panelManager.getPanelNames().toArray(new String[0])));
         Argument guiSizeArgument = new StringArgument("size")
-                .overrideSuggestions((s, a) -> Stream.of(GUISize.values()).map(ss -> ss.name().toLowerCase(Locale.ROOT)).toArray(String[]::new));
+                .replaceSuggestions(ArgumentSuggestions.strings(i -> Stream.of(GUISize.values()).map(ss -> ss.name().toLowerCase(Locale.ROOT)).toArray(String[]::new)));
 
         new CommandAPICommand("ceguipanel")
                 .withPermission("ceguipanel.command.ceguipanel")
@@ -109,7 +107,7 @@ public final class GUIPanelPlugin extends JavaPlugin {
                 )
                 .withSubcommand(new CommandAPICommand("open")
                         .withArguments(panelArgument)
-                        .withArguments(new EntitySelectorArgument("targets", EntitySelectorArgument.EntitySelector.MANY_PLAYERS))
+                        .withArguments(new EntitySelectorArgument<Collection<String>>("targets", EntitySelector.MANY_PLAYERS))
                         .executesNative(this::execOpen)
                 )
                 .withSubcommand(new CommandAPICommand("edit")

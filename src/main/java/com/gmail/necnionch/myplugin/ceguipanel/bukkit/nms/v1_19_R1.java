@@ -5,27 +5,30 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jorel.commandapi.CommandAPIHandler;
 import dev.jorel.commandapi.wrappers.SimpleFunctionWrapper;
-import net.minecraft.server.v1_15_R1.*;
+import net.minecraft.commands.CommandListenerWrapper;
+import net.minecraft.commands.arguments.ArgumentChatComponent;
+import net.minecraft.network.chat.ChatComponentUtils;
+import net.minecraft.network.chat.IChatBaseComponent;
+import net.minecraft.server.level.WorldServer;
+import net.minecraft.world.phys.Vec2F;
+import net.minecraft.world.phys.Vec3D;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
-import org.bukkit.command.*;
-import org.bukkit.craftbukkit.v1_15_R1.CraftServer;
-import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_15_R1.command.CraftBlockCommandSender;
-import org.bukkit.craftbukkit.v1_15_R1.command.ProxiedNativeCommandSender;
-import org.bukkit.craftbukkit.v1_15_R1.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_15_R1.entity.CraftMinecartCommand;
-import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
+import org.bukkit.command.BlockCommandSender;
+import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_19_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_19_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.minecart.CommandMinecart;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.NoSuchElementException;
 
-public class v1_15_R1 implements NMS {
+public class v1_19_R1 implements NMS {
     @Override
     public @Nullable String formatTellrawJson(CommandSender sender, String json) throws CommandSyntaxException {
         IChatBaseComponent chatComponent = ArgumentChatComponent.a().parse(new StringReader(json));
@@ -52,46 +55,27 @@ public class v1_15_R1 implements NMS {
         }
 
         CommandListenerWrapper wrapper = new CommandListenerWrapper(
-                getListener(sender).base, loc, look, world, 0,  // permission level?
+                getListener(sender).c, loc, look, world, 0,  // permission level?
                 sender.getName(),
                 chatComponent,
                 ((CraftServer) Bukkit.getServer()).getServer(),
                 (sender instanceof org.bukkit.entity.Entity) ? ((CraftEntity) sender).getHandle() : null
         );
 
-        net.minecraft.server.v1_15_R1.Entity entity = null;
+        net.minecraft.world.entity.Entity entity = null;
         if (sender instanceof Player) {
             entity = ((CraftPlayer) sender).getHandle();
         } else if (sender instanceof org.bukkit.entity.Entity) {
             entity = ((CraftEntity) sender).getHandle();
         }
 
-        IChatBaseComponent components = ChatComponentUtils.filterForDisplay(wrapper, chatComponent, entity, 0);
+        IChatBaseComponent components = ChatComponentUtils.a(wrapper, chatComponent, entity, 0);
 
-        return components.getLegacyString();
+        return components.f().toString();
     }
 
     private static CommandListenerWrapper getListener(CommandSender sender) {
-        if (sender instanceof Player) {
-            return ((CraftPlayer) sender).getHandle().getCommandListener();
-        }
-        if (sender instanceof BlockCommandSender) {
-            return ((CraftBlockCommandSender) sender).getWrapper();
-        }
-        if (sender instanceof CommandMinecart) {
-            return ((CraftMinecartCommand) sender).getHandle().getCommandBlock().getWrapper();
-        }
-        if (sender instanceof RemoteConsoleCommandSender) {
-            return ((DedicatedServer) MinecraftServer.getServer()).remoteControlCommandListener.getWrapper();
-        }
-        if (sender instanceof ConsoleCommandSender) {
-            return ((CraftServer) sender.getServer()).getServer().getServerCommandListener();
-        }
-        if (sender instanceof ProxiedCommandSender) {
-            return ((ProxiedNativeCommandSender) sender).getHandle();
-        }
-
-        throw new IllegalArgumentException("Cannot make " + sender + " a vanilla command listener");
+        return ((CommandListenerWrapper) CommandAPIHandler.getInstance().getNMS().getCLWFromCommandSender(sender));
     }
 
 
