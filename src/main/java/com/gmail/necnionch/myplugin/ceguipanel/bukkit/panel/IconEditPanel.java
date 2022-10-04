@@ -1,5 +1,6 @@
 package com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel;
 
+import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIIcon;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUIPanel;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.GUISize;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.gui.PanelItem;
@@ -25,14 +26,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class IconEditPanel extends GUIPanel {
-    private final Consumer<Optional<ItemStack>> done;
-    private final ItemStack model;
+    private final Consumer<Optional<GUIIcon>> done;
+    private final GUIIcon model;
     private ItemStack change;
     private PanelItem overridable;
     private boolean cloneMeta;
-    private ItemFlagEditor itemFlagEditor;
+    private final ItemFlagEditor itemFlagEditor;
 
-    public IconEditPanel(Player player, ItemStack model, @Nullable ItemStack change, Consumer<Optional<ItemStack>> done) {
+    public IconEditPanel(Player player, GUIIcon model, @Nullable ItemStack change, Consumer<Optional<GUIIcon>> done) {
         super(player, ChatColor.DARK_GREEN + "アイコン設定", GUISize.CHEST9X3, null);
         this.done = done;
         this.model = model;
@@ -96,7 +97,7 @@ public class IconEditPanel extends GUIPanel {
                 });
 
         slots[15] = PanelItem.createItem(Material.ANVIL, ChatColor.GOLD + "決定")
-                .setClickListener((e, p) -> done.accept(Optional.of(buildItemStack())));
+                .setClickListener((e, p) -> done.accept(Optional.of(createIcon())));
 
         slots[16] = PanelItem.createItem(Material.OAK_DOOR, ChatColor.RED + "戻る")
                 .setClickListener((e, p) -> done.accept(Optional.empty()));
@@ -118,25 +119,29 @@ public class IconEditPanel extends GUIPanel {
 
 
     private ItemStack buildItemStack() {
-        ItemStack itemStack;
+        return createIcon().buildItemStack(player);
+    }
 
-        if (change == null) {
-            itemStack = model.clone();
-        } else if (!cloneMeta) {
-            itemStack = model.clone();
-            itemStack.setType(change.getType());
-        } else {
-            itemStack = change.clone();
+    public GUIIcon createIcon() {
+        GUIIcon icon = model.copy();
+        if (change != null) {
+            if (!cloneMeta) {
+                icon.getItemStack().setType(change.getType());
+            } else {
+                ItemStack itemStack = change.clone();
+                itemStack.setAmount(1);
+                icon.setItemStack(itemStack);
+            }
         }
-        itemStack.setAmount(1);
 
-        Optional.ofNullable(itemStack.getItemMeta()).ifPresent(meta -> {
+        Optional.ofNullable(icon.getItemStack().getItemMeta()).ifPresent(meta -> {
             meta.removeItemFlags(ItemFlag.values());
             meta.addItemFlags(itemFlagEditor.itemFlags.toArray(new ItemFlag[0]));
-            itemStack.setItemMeta(meta);
+            icon.getItemStack().setItemMeta(meta);
         });
 
-        return itemStack;
+        return icon;
+
     }
 
 

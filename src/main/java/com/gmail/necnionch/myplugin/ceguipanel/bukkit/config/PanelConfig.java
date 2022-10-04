@@ -9,7 +9,6 @@ import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.Condition;
 import com.gmail.necnionch.myplugin.ceguipanel.bukkit.panel.condition.ConditionCreator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -94,10 +93,7 @@ public class PanelConfig {
                 itemData.put("view_condition", condData);
             }));
 
-            GUIIcon icon = itemConfig.getIcon();
-            Map<String, Object> iconData = Maps.newHashMap();
-            iconData.put("itemstack", icon.getItemStack().clone());
-            itemData.put("icon", iconData);
+            itemData.put("icon", itemConfig.getIcon().serialize());
 
             slots.add(itemData);
         }
@@ -168,10 +164,7 @@ public class PanelConfig {
             GUIIcon icon = null;
             if (slotEntry.get("icon") instanceof Map) {
                 try {
-                    Map<?, ?> iconEntry = (Map<?, ?>) slotEntry.get("icon");
-                    ItemStack itemStack = (ItemStack) iconEntry.get("itemstack");
-                    if (itemStack != null)
-                        icon = new GUIIcon(itemStack.clone());
+                    icon = GUIIcon.deserialize((Map<?, ?>) slotEntry.get("icon"));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

@@ -20,10 +20,8 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,18 +59,18 @@ public class ItemEditPanel extends GUIPanel {
                         e.setCursor(null);
                         p.getInventory().addItem(cursor);
 
-                        new IconEditPanel(player, config.getIcon().getItemStack(), cursor, r -> {
-                            r.ifPresent(itemStack -> {
-                                config.getIcon().setItemStack(itemStack);
+                        new IconEditPanel(player, config.getIcon().copy(), cursor, r -> {
+                            r.ifPresent(icon -> {
+                                config.setIcon(icon);
                                 editPanel.setChanged();
                             });
                             this.open();
                         }).open(this);
 
                     } else if (ClickType.LEFT.equals(e.getClick()) || ClickType.RIGHT.equals(e.getClick())) {
-                        new IconEditPanel(player, config.getIcon().getItemStack(), null, r -> {
-                            r.ifPresent(itemStack -> {
-                                config.getIcon().setItemStack(itemStack);
+                        new IconEditPanel(player, config.getIcon().copy(), null, r -> {
+                            r.ifPresent(icon -> {
+                                config.setIcon(icon);
                                 editPanel.setChanged();
                             });
                             this.open();
@@ -237,15 +235,13 @@ public class ItemEditPanel extends GUIPanel {
                         ChatColor.GRAY + "左クリック: 表示名を入力",
                         ChatColor.GRAY + "右クリック: 表示名をリセット",
                         "",
-                        ChatColor.GRAY + "> " + ChatColor.WHITE + ChatColor.ITALIC + Optional.ofNullable(config.getIcon().getItemStack().getItemMeta())
-                                .filter(ItemMeta::hasDisplayName)
-                                .map(ItemMeta::getDisplayName)
+                        ChatColor.GRAY + "> " + ChatColor.WHITE + ChatColor.ITALIC + Optional.ofNullable(config.getIcon().getDisplayName())
                                 .orElseGet(() -> ChatColor.GRAY.toString() + ChatColor.ITALIC + "デフォルト")
                 )).getItemStack())
                 .setClickListener((e, p) -> {
                     if (ClickType.LEFT.equals(e.getClick())) {
                         GUIIcon icon = config.getIcon();
-                        String name = Optional.ofNullable(icon.getItemStack().getItemMeta()).map(ItemMeta::getDisplayName).orElse("");
+                        String name = Optional.ofNullable(icon.getDisplayName()).orElse("");
 
                         destroy(true);
                         p.spigot().sendMessage(new ComponentBuilder()
@@ -263,23 +259,16 @@ public class ItemEditPanel extends GUIPanel {
 
                         LineInput.listen(OWNER, p, r -> {
                             r.ifPresent(s -> {
-                                ItemMeta meta = icon.getItemStack().getItemMeta();
-                                if (meta != null) {
-                                    meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', s));
-                                    icon.getItemStack().setItemMeta(meta);
-                                    editPanel.setChanged();
-                                }
+                                icon.setDisplayName(ChatColor.translateAlternateColorCodes('&', s));
+                                editPanel.setChanged();
                             });
                             this.open();
                         });
 
                     } else if (ClickType.RIGHT.equals(e.getClick())) {
-                        Optional.ofNullable(config.getIcon().getItemStack().getItemMeta()).ifPresent(meta -> {
-                            meta.setDisplayName(null);
-                            config.getIcon().getItemStack().setItemMeta(meta);
-                            editPanel.setChanged();
-                            this.update();
-                        });
+                        config.getIcon().setDisplayName(null);
+                        editPanel.setChanged();
+                        this.update();
                     }
                 });
 
@@ -328,13 +317,9 @@ public class ItemEditPanel extends GUIPanel {
         private int cursor = 0;
 
         public List<String> buildEditIconLore() {
-            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
-            if (meta == null)
-                return Collections.emptyList();
-
             List<String> display = Lists.newArrayList();
-            List<String> lore = Optional.ofNullable(meta.getLore()).orElseGet(Lists::newArrayList);
-            int lines = lore.size();
+            String[] lore = Optional.ofNullable(currentItemConfig.getIcon().getLoreLines()).orElseGet(() -> new String[0]);
+            int lines = lore.length;
 
             boolean newLine = cursor >= lines;
 
@@ -343,8 +328,8 @@ public class ItemEditPanel extends GUIPanel {
             display.add(ChatColor.GRAY + (newLine ? "S+右クリック: " : "S+右クリック: 現在の行を削除"));
             display.add("");
 
-            for (int i = 0; i < lore.size(); i++) {
-                display.add((cursor == i ? ChatColor.GOLD : ChatColor.GRAY) + "> " + ChatColor.DARK_PURPLE + ChatColor.ITALIC + lore.get(i));
+            for (int i = 0; i < lines; i++) {
+                display.add((cursor == i ? ChatColor.GOLD : ChatColor.GRAY) + "> " + ChatColor.DARK_PURPLE + ChatColor.ITALIC + lore[i]);
             }
 
             if (newLine)
@@ -354,12 +339,7 @@ public class ItemEditPanel extends GUIPanel {
         }
 
         public void nextCursor() {
-            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
-            if (meta == null) {
-                cursor = 0;
-                return;
-            }
-            int lines = Optional.ofNullable(meta.getLore()).map(List::size).orElse(0);
+            int lines = Optional.ofNullable(currentItemConfig.getIcon().getLoreLines()).map(lore -> lore.length).orElse(0);
             if (lines <= 0) {
                 cursor = 0;
             }
@@ -371,40 +351,35 @@ public class ItemEditPanel extends GUIPanel {
         }
 
         public @Nullable String getCurrentLine() {
-            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
-            if (meta == null)
+            String[] lore = Optional.ofNullable(currentItemConfig.getIcon().getLoreLines()).orElseGet(() -> new String[0]);
+            if (cursor >= lore.length)
                 return null;
-            List<String> lore = Optional.ofNullable(meta.getLore()).orElseGet(Lists::newArrayList);
-            if (cursor >= lore.size())
-                return null;
-            return lore.get(cursor);
+            return lore[cursor];
         }
 
         public void setCurrentLine(String line) {
-            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
-            if (meta == null)
-                return;
-            List<String> lore = Optional.ofNullable(meta.getLore()).orElseGet(Lists::newArrayList);
+            List<String> lore = Optional.ofNullable(currentItemConfig.getIcon().getLoreLines())
+                    .map(Lists::newArrayList)
+                    .orElseGet(Lists::newArrayList);
+
             if (cursor >= lore.size()) {
                 lore.add(line);
             } else {
                 lore.remove(cursor);
                 lore.add(cursor, line);
             }
-            meta.setLore(lore);
-            currentItemConfig.getIcon().getItemStack().setItemMeta(meta);
+            currentItemConfig.getIcon().setLoreLines(lore.toArray(new String[0]));
             editPanel.setChanged();
         }
 
         public void removeCurrentLine() {
-            ItemMeta meta = currentItemConfig.getIcon().getItemStack().getItemMeta();
-            if (meta == null)
-                return;
-            List<String> lore = Optional.ofNullable(meta.getLore()).orElseGet(Lists::newArrayList);
+            List<String> lore = Optional.ofNullable(currentItemConfig.getIcon().getLoreLines())
+                    .map(Lists::newArrayList)
+                    .orElseGet(Lists::newArrayList);
+
             if (cursor < lore.size()) {
                 lore.remove(cursor);
-                meta.setLore(lore);
-                currentItemConfig.getIcon().getItemStack().setItemMeta(meta);
+                currentItemConfig.getIcon().setLoreLines(lore.toArray(new String[0]));
                 editPanel.setChanged();
             }
         }

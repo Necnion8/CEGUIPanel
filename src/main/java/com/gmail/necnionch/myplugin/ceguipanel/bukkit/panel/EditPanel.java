@@ -55,7 +55,7 @@ public class EditPanel extends GUIPanel {
     }
 
     public static EditPanel create(GUIPanelManager mgr, Player player, @NotNull PanelConfig config) {
-        return new EditPanel(mgr, player, config);
+        return new EditPanel(mgr, player, mgr.clonePanelConfig(config));
     }
 
 
