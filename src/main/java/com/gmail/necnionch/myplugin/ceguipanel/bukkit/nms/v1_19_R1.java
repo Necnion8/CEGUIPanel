@@ -1,10 +1,8 @@
 package com.gmail.necnionch.myplugin.ceguipanel.bukkit.nms;
 
-import com.gmail.necnionch.myplugin.ceguipanel.bukkit.GUIPanelPlugin;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jorel.commandapi.CommandAPIHandler;
-import dev.jorel.commandapi.wrappers.SimpleFunctionWrapper;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -15,6 +13,10 @@ import net.minecraft.network.chat.ChatModifier;
 import net.minecraft.network.chat.IChatBaseComponent;
 import net.minecraft.network.chat.IChatMutableComponent;
 import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.resources.MinecraftKey;
+import net.minecraft.server.CustomFunctionData;
+import net.minecraft.server.CustomFunctionManager;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.WorldServer;
 import net.minecraft.world.phys.Vec2F;
 import net.minecraft.world.phys.Vec3D;
@@ -30,13 +32,11 @@ import org.bukkit.craftbukkit.v1_19_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -57,18 +57,24 @@ public class v1_19_R1 implements NMS {
 
     @Override
     public boolean executeFunction(CommandSender sender, NamespacedKey functionName) {
-        SimpleFunctionWrapper function;
-        try {
-            function = CommandAPIHandler.getInstance().getNMS().getFunction(functionName);
-        } catch (NoSuchElementException e) {
-            function = null;
-        }
-        if (function == null) {
-            JavaPlugin.getPlugin(GUIPanelPlugin.class).getLogger().warning("Failed to execute function: " + functionName);
-            return false;
-        }
-        function.run(sender);
-        return true;
+        CustomFunctionData d = MinecraftServer.getServer().aA();
+        CustomFunctionManager h = MinecraftServer.getServer().at.b().a();
+
+        MinecraftKey mKey = new MinecraftKey(functionName.getNamespace(), functionName.getKey());
+        return h.a(mKey).map(customFunction -> {
+            CommandListenerWrapper wrapper = d.d();
+
+            if (sender instanceof Entity) {
+                net.minecraft.world.entity.Entity e = ((CraftEntity) sender).getHandle();
+                wrapper = wrapper.a(e);
+                wrapper = wrapper.a(e.cY());
+                wrapper = wrapper.a(e.bz());
+                wrapper = wrapper.a(((WorldServer) e.s));
+            }
+
+            d.a(customFunction, wrapper);
+            return true;
+        }).orElse(false);
     }
 
 
